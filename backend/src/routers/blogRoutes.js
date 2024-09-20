@@ -1,12 +1,14 @@
 const express=require('express');
 const Blog = require('../models/blogmodel');
+const Comment = require('../models/commentModel');
+const { verifyToken } = require('../middleware/verifyToken');
 const router=express.Router();
 
 //create a post 
-router.post('/create-post', async (req,res)=>{
+router.post('/create-post',verifyToken, async (req,res)=>{
     try {
         // console.log("blog data from api",req.body);
-        const newPost= new Blog({...req.body});
+        const newPost= new Blog({...req.body}); //use author :req.userId, when you have token verification 
         await  newPost.save();
         res.status(200).send({
             message:"post created successfully",
@@ -41,7 +43,7 @@ router.get('/',async (req,res)=>{
                 location,
             }
         }
-        const post =await Blog.find(query).sort({createdAt: -1});
+        const post =await Blog.find(query).populate('author', 'email').pop({createdAt: -1});
         res.status(200).send({
             message:'find succcessfully',
             posts:post,
@@ -64,7 +66,8 @@ router.get("/:id", async (req, res)=>{
                 message:"Post not found"
             })
         }
-        //todo also fetch comments related to the post
+
+        const comment=await Comment.find({postId:postId}).populate('user', "username email")
          res.status(200).send({
             message:"POst received successfully",
             post:post,
@@ -77,7 +80,7 @@ router.get("/:id", async (req, res)=>{
 
 //update a blog post 
 
-router.patch("/update-post/:id", async(req,res)=>{
+router.patch("/update-post/:id",verifyToken, async(req,res)=>{
     try {
         const postId=req.params.id;
         const updatePost=await Blog.findByIdAndUpdate(postId, {
@@ -100,7 +103,7 @@ router.patch("/update-post/:id", async(req,res)=>{
 })
 
 //delete a blog post 
-router.delete("/:id", async(req,res)=>{
+router.delete("/:id",verifyToken, async(req,res)=>{
     try {
         const postId=req.params.id;
         const post=await Blog.findByIdAndDelete(postId);
@@ -109,6 +112,8 @@ router.delete("/:id", async(req,res)=>{
                 message:"post is not found"
             })
         }
+
+        await Comment.deleteMany({postId:postId})
         res.status(200).send({
             message:"post deleted successfully",
             post:post,
