@@ -13,14 +13,14 @@ const Navbar = () => {
     const toggleMenu = () => setIsmenuOpen(!isMenuOpen);
   return (
     <header className='bg-white py-6 border '>
-        <nav className='container mx-auto flex justify-between px-5'>
+        <nav className='container sm:max-w-[1200px] mx-auto flex justify-between px-5'>
             <a href='/'>
             <img src='/logo.png' className='h-12'/>
             </a>
             <ul className='sm:flex hidden  items-center gap-8'>
                {
                 navLinks.map((list, index)=>(
-                    <li>
+                    <li key={index}>
                         <NavLink to={`${list.path}`} className={({isActive})=>
                         isActive? "active":""
 
